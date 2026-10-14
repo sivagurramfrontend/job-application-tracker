@@ -1,4 +1,4 @@
-import {useState} from 'react'
+import {useState, useEffect} from 'react'
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
 import StatsCard from './components/StatsCard'
@@ -30,8 +30,43 @@ const jobs = [
 ]
 
 function App() {
-  const [savedJobs, setSavedJobs] = useState([])
-  return (
+
+const [savedJobs, setSavedJobs] = useState(() => {
+  const storedJobs = localStorage.getItem('savedJobs')
+
+  return storedJobs ? JSON.parse(storedJobs) : []
+})
+
+useEffect(() => {
+  localStorage.setItem(
+    'savedJobs',
+    JSON.stringify(savedJobs)
+  )
+}, [savedJobs])
+
+
+const [searchCriteria, setSearchCriteria] = useState({
+  keyword: '',
+  location: '',
+})
+
+
+const filteredJobs = jobs.filter((job) => {
+  const keyword = searchCriteria.keyword.trim().toLowerCase()
+  const location = searchCriteria.location.trim().toLowerCase()
+
+  const matchesKeyword =
+    job.title.toLowerCase().includes(keyword) ||
+    job.company.toLowerCase().includes(keyword)
+
+  const matchesLocation =
+    job.location.toLowerCase().includes(location)
+
+  return matchesKeyword && matchesLocation
+})
+
+
+return (
     <div className="min-h-screen bg-slate-100 md:flex">
       <Sidebar />
 
@@ -63,14 +98,17 @@ function App() {
             description="Jobs to review later"
           />
         </div>
-        <JobSearch />
+<JobSearch
+  searchCriteria={searchCriteria}
+  setSearchCriteria={setSearchCriteria}
+/>
 <section className="mt-8">
   <h2 className="mb-4 text-xl font-bold text-slate-900">
     Job Opportunities
   </h2>
 
   <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-    {jobs.map((job) => (
+    {filteredJobs.map((job) => (
       <JobCard
        key={job.id}
         job={job} 
